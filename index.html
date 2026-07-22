@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Loupe — a darkroom for your pictures and clips</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b0a08;
+    --bg-alt:#141210;
+    --panel:#1c1914;
+    --panel-raised:#231f18;
+    --amber:#E8862A;
+    --amber-bright:#FFB44D;
+    --red:#B3231A;
+    --cream:#F2E8D8;
+    --muted:#948B7A;
+    --line:#33302A;
+    --shadow: 0 20px 50px -20px rgba(0,0,0,0.7);
+  }
+
+  *{box-sizing:border-box; margin:0; padding:0;}
+
+  body{
+    background:
+      radial-gradient(ellipse 900px 500px at 50% -10%, rgba(232,134,42,0.08), transparent 60%),
+      var(--bg);
+    color:var(--cream);
+    font-family:'Fraunces', serif;
+    min-height:100vh;
+    padding: 48px 24px 96px;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .mono{ font-family:'JetBrains Mono', monospace; }
+
+  /* ---------- Header ---------- */
+  header{
+    max-width: 980px;
+    margin: 0 auto 56px;
+    text-align:center;
+  }
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.35em;
+    color:var(--amber);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:12px;
+    margin-bottom:18px;
+  }
+  .eyebrow::before, .eyebrow::after{
+    content:"";
+    width:28px;
+    height:1px;
+    background:var(--line);
+  }
+  h1{
+    font-size: clamp(40px, 7vw, 76px);
+    font-weight:600;
+    letter-spacing:-0.02em;
+    line-height:1;
+  }
+  h1 em{
+    font-style:italic;
+    color:var(--amber);
+    font-weight:500;
+  }
+  header p{
+    margin-top:16px;
+    color:var(--muted);
+    font-size:16px;
+    max-width:480px;
+    margin-left:auto;
+    margin-right:auto;
+    line-height:1.5;
+  }
+
+  /* ---------- Filmstrip frame (the viewer) ---------- */
+  .stage{
+    max-width: 860px;
+    margin: 0 auto 28px;
+  }
+
+  .filmstrip{
+    background: var(--panel);
+    border-radius: 4px;
+    box-shadow: var(--shadow);
+    overflow:hidden;
+    border: 1px solid var(--line);
+  }
+
+  .sprockets{
+    height:22px;
+    display:flex;
+    align-items:center;
+    justify-content:space-evenly;
+    background: linear-gradient(var(--bg-alt), var(--bg-alt));
+  }
+  .sprockets span{
+    width:10px;
+    height:10px;
+    border-radius:2px;
+    background: var(--bg);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03);
+  }
+
+  .viewer{
+    position:relative;
+    aspect-ratio: 16/10;
+    background:
+      repeating-linear-gradient(135deg, rgba(255,255,255,0.015) 0 2px, transparent 2px 6px),
+      #0f0d0a;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+  }
+
+  .viewer img, .viewer video{
+    max-width:100%;
+    max-height:100%;
+    width:auto;
+    height:auto;
+    display:block;
+    animation: develop 0.5s ease both;
+  }
+
+  @keyframes develop{
+    from{ opacity:0; filter: brightness(0.3) contrast(1.4); transform:scale(1.01); }
+    to{ opacity:1; filter: brightness(1) contrast(1); transform:scale(1); }
+  }
+
+  .empty-state{
+    text-align:center;
+    color:var(--muted);
+    padding: 0 32px;
+  }
+  .empty-state .icon{
+    font-size:34px;
+    margin-bottom:12px;
+    opacity:0.6;
+  }
+  .empty-state .title{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    letter-spacing:0.15em;
+    text-transform:uppercase;
+    color:var(--amber);
+    margin-bottom:8px;
+  }
+  .empty-state .sub{
+    font-size:14px;
+    line-height:1.5;
+    max-width: 320px;
+    margin: 0 auto;
+  }
+
+  .frame-tag{
+    position:absolute;
+    top:14px;
+    left:14px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.1em;
+    color:var(--cream);
+    background:rgba(11,10,8,0.65);
+    border:1px solid rgba(255,255,255,0.08);
+    padding:4px 9px;
+    border-radius:3px;
+    backdrop-filter: blur(4px);
+  }
+  .frame-tag span{ color:var(--amber); }
+
+  .kind-tag{
+    position:absolute;
+    top:14px;
+    right:14px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:10px;
+    letter-spacing:0.15em;
+    text-transform:uppercase;
+    color:var(--bg);
+    background:var(--amber);
+    padding:4px 8px;
+    border-radius:3px;
+    font-weight:600;
+  }
+
+  /* ---------- Controls ---------- */
+  .controls{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:20px;
+    margin: 30px 0 8px;
+    flex-wrap:wrap;
+  }
+
+  .shutter{
+    position:relative;
+    width:84px;
+    height:84px;
+    border-radius:50%;
+    border:none;
+    cursor:pointer;
+    background: radial-gradient(circle at 35% 30%, var(--amber-bright), var(--amber) 55%, #a8631c 100%);
+    box-shadow: 0 8px 22px -6px rgba(232,134,42,0.55), inset 0 2px 3px rgba(255,255,255,0.35), inset 0 -6px 10px rgba(0,0,0,0.25);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+  }
+  .shutter:hover{ transform: translateY(-2px); }
+  .shutter:active{ transform: scale(0.94); }
+  .shutter::before{
+    content:"";
+    width:60px; height:60px;
+    border-radius:50%;
+    border:2px solid rgba(11,10,8,0.35);
+  }
+  .shutter:disabled{
+    opacity:0.35;
+    cursor:not-allowed;
+    transform:none;
+  }
+
+  .shutter-label{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.2em;
+    color:var(--muted);
+    text-transform:uppercase;
+    text-align:center;
+    margin-top:10px;
+  }
+
+  .shutter-wrap{ display:flex; flex-direction:column; align-items:center; }
+
+  .side-btn{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    letter-spacing:0.05em;
+    color:var(--cream);
+    background:var(--panel-raised);
+    border:1px solid var(--line);
+    padding:11px 18px;
+    border-radius:5px;
+    cursor:pointer;
+    transition: border-color 0.15s ease, color 0.15s ease;
+  }
+  .side-btn:hover{ border-color:var(--amber); color:var(--amber-bright); }
+  .side-btn:disabled{ opacity:0.3; cursor:not-allowed; }
+
+  .status-line{
+    text-align:center;
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    color:var(--muted);
+    letter-spacing:0.05em;
+    margin-bottom: 44px;
+  }
+
+  footer{
+    text-align:center;
+    margin-top:60px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:10px;
+    letter-spacing:0.15em;
+    color: #4a463e;
+    text-transform:uppercase;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .viewer img, .viewer video{ animation:none; }
+    .shutter{ transition:none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">Pictures &amp; clips, revealed one at a time</div>
+  <h1>L<em>oupe</em></h1>
+  <p>Press the shutter. Loupe pulls one picture or clip at random and won't repeat it until every frame in the reel has had its turn.</p>
+</header>
+
+<div class="stage">
+  <div class="filmstrip">
+    <div class="sprockets">
+      <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+    <div class="viewer" id="viewer">
+      <div class="empty-state" id="emptyState">
+        <div class="icon">◐</div>
+        <div class="title">Reel is empty</div>
+        <div class="sub">Add your pictures and videos to the MEDIA_ITEMS list in the code, then press the shutter to reveal your first frame.</div>
+      </div>
+    </div>
+    <div class="sprockets">
+      <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+  </div>
+</div>
+
+<div class="controls">
+  <div class="shutter-wrap">
+    <button class="shutter" id="revealBtn" disabled title="Reveal a random frame">
+      <div style="width:60px;height:60px;border-radius:50%;position:absolute;"></div>
+    </button>
+    <div class="shutter-label">Reveal</div>
+  </div>
+</div>
+
+<div class="status-line" id="statusLine">Load media to begin</div>
+
+<footer>Loupe · viewed locally in your browser · nothing is uploaded anywhere</footer>
+
+<script>
+  /* ============================================================
+     ADD YOUR MEDIA HERE — list each picture or video as one entry.
+     type: 'image' or 'video'
+     url:  a path/URL to the file (local folder, your site, or a
+           direct link). name: whatever label you want to see.
+     Files below assume this HTML file sits in the SAME FOLDER
+     as your media files, so the urls are just plain filenames.
+     ============================================================ */
+  const MEDIA_ITEMS = [
+    { type: 'image', url: 'ax6csr.jpg', name: 'ax6csr' },
+    { type: 'image', url: 'ax6d0h.jpg', name: 'ax6d0h' },
+    { type: 'image', url: 'ax6dfv.jpg', name: 'ax6dfv' },
+    { type: 'image', url: 'ax6eau.jpg', name: 'ax6eau' },
+    { type: 'image', url: 'ax6eel.jpg', name: 'ax6eel' },
+    { type: 'image', url: 'ax6emp.jpg', name: 'ax6emp' },
+    { type: 'image', url: 'ax6epw.jpg', name: 'ax6epw' },
+    { type: 'image', url: 'ax6esu.jpg', name: 'ax6esu' },
+    { type: 'image', url: 'ax6exp.jpg', name: 'ax6exp' },
+    { type: 'image', url: 'ax6v17.jpg', name: 'ax6v17' },
+    { type: 'image', url: 'ax6vtr.jpg', name: 'ax6vtr' },
+    { type: 'image', url: 'ax6wd7.jpg', name: 'ax6wd7' },
+    { type: 'image', url: 'ax6wn4.jpg', name: 'ax6wn4' },
+    { type: 'image', url: 'ax6wvm.jpg', name: 'ax6wvm' },
+    { type: 'video', url: 'ax6x9q.mp4', name: 'ax6x9q' },
+    { type: 'image', url: 'ax6xjs.jpg', name: 'ax6xjs' },
+    { type: 'image', url: 'ax6xwr.jpg', name: 'ax6xwr' },
+    { type: 'image', url: 'ax6yaa.jpg', name: 'ax6yaa' },
+    { type: 'image', url: 'download (1).jfif', name: 'download (1)' },
+    { type: 'image', url: 'download (2).jfif', name: 'download (2)' },
+  ];
+</script>
+
+<script>
+(function(){
+  const viewer = document.getElementById('viewer');
+  const emptyState = document.getElementById('emptyState');
+  const revealBtn = document.getElementById('revealBtn');
+  const statusLine = document.getElementById('statusLine');
+
+  /** @type {{id:number, url:string, type:'image'|'video', name:string}[]} */
+  let media = [];
+  let nextId = 1;
+  let queue = [];        // shuffled order still to be shown this cycle
+  let lastShownId = null;
+  let shownCount = 0;
+
+  function fmtCount(n, total){
+    const pad = String(n).padStart(2,'0');
+    const padTotal = String(total).padStart(2,'0');
+    return pad + ' / ' + padTotal;
+  }
+
+  function shuffle(arr){
+    const a = arr.slice();
+    for(let i = a.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i+1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function refreshUI(){
+    const total = media.length;
+    revealBtn.disabled = total === 0;
+
+    if(total === 0){
+      statusLine.textContent = 'Load media to begin';
+    } else if(shownCount === 0){
+      statusLine.textContent = total + (total === 1 ? ' frame' : ' frames') + ' loaded · press reveal';
+    }
+  }
+
+  function showItem(item, manualPick){
+    viewer.innerHTML = '';
+
+    const frameTag = document.createElement('div');
+    frameTag.className = 'frame-tag';
+    if(manualPick){
+      frameTag.innerHTML = 'FRAME <span>#' + (media.findIndex(m=>m.id===item.id)+1) + '</span>';
+    } else {
+      frameTag.innerHTML = 'FRAME <span>' + fmtCount(shownCount, media.length) + '</span>';
+    }
+    viewer.appendChild(frameTag);
+
+    const kindTag = document.createElement('div');
+    kindTag.className = 'kind-tag';
+    kindTag.textContent = item.type;
+    viewer.appendChild(kindTag);
+
+    let el;
+    if(item.type === 'image'){
+      el = document.createElement('img');
+      el.src = item.url;
+      el.alt = item.name;
+    } else {
+      el = document.createElement('video');
+      el.src = item.url;
+      el.controls = true;
+      el.autoplay = true;
+      el.muted = true;
+      el.loop = false;
+    }
+    viewer.appendChild(el);
+
+    lastShownId = item.id;
+    statusLine.textContent = 'Shown ' + fmtCount(shownCount, media.length) + ' this cycle · ' + item.name;
+  }
+
+  function revealRandom(){
+    if(media.length === 0) return;
+
+    if(media.length === 1){
+      shownCount = 1;
+      showItem(media[0], false);
+      return;
+    }
+
+    if(queue.length === 0){
+      // start a fresh cycle, shuffled, making sure it doesn't start
+      // with the item we just ended the previous cycle on
+      let attempt = shuffle(media.map(m => m.id));
+      if(attempt[0] === lastShownId){
+        [attempt[0], attempt[1]] = [attempt[1], attempt[0]];
+      }
+      queue = attempt;
+      shownCount = 0;
+    }
+
+    const nextId2 = queue.shift();
+    shownCount += 1;
+    const item = media.find(m => m.id === nextId2);
+    showItem(item, false);
+  }
+
+  function loadFromData(items){
+    items.forEach(entry => {
+      if(!entry.url || !entry.type) return;
+      media.push({
+        id: nextId++,
+        url: entry.url,
+        type: entry.type === 'video' ? 'video' : 'image',
+        name: entry.name || entry.url.split('/').pop()
+      });
+    });
+  }
+
+  // ---- wiring ----
+  revealBtn.addEventListener('click', revealRandom);
+
+  loadFromData(MEDIA_ITEMS);
+  refreshUI();
+})();
+</script>
+
+</body>
+</html>
